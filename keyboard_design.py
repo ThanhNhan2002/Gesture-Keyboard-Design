@@ -20,7 +20,7 @@ class Keyboard:
         self.key_names = [['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
                           ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
                           ['Caps', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', '<--'],
-                          ['123', 'Space', 'Return']]
+                          ['123', 'Space', 'Cmd', 'Return']]
 
         # Creating an empty list
         self.keys = []
@@ -91,14 +91,27 @@ class Keyboard:
         #  there are only three keys in the forth row, so larger size for the three keys
         for k in range(len(self.key_names[row])):
             if k == 0:  # '123' key
-                key = Key(self.key_names[row][k], gap_two_sides + key_width * 2, key_height,
-                          horizontal_key_gap, keyboard_upper_left_y + (key_height + vertical_key_gap) * 3)
-            elif k == 2:  # 'Space' key
-                key = Key(self.key_names[row][k], gap_two_sides + key_width * 2, key_height,
+                key = Key(self.key_names[row][k],
+                          gap_two_sides + key_width * 2,
+                          key_height,
+                          horizontal_key_gap,
+                          keyboard_upper_left_y + (key_height + vertical_key_gap) * 3)
+            elif k == 2:  # 'cmd' key
+                key = Key(self.key_names[row][k],
+                          key_width * 1,
+                          key_height,
+                          gap_two_sides + 6 * (key_width + horizontal_key_gap),
+                          keyboard_upper_left_y + (key_height + vertical_key_gap) * 3)
+            elif k == 3:  # 'Return' key
+                key = Key(self.key_names[row][k],
+                          gap_two_sides + key_width * 2,
+                          key_height,
                           gap_two_sides + 7 * (key_width + horizontal_key_gap),
                           keyboard_upper_left_y + (key_height + vertical_key_gap) * 3)
-            else:  # 'Return' key
-                key = Key(self.key_names[row][k], key_width * 5 + horizontal_key_gap * 4, key_height,
+            else:  # 'Space' key, k == 1
+                key = Key(self.key_names[row][k],
+                          key_width * 4 + horizontal_key_gap * 3,
+                          key_height,
                           gap_two_sides + 2 * (key_width + horizontal_key_gap),
                           keyboard_upper_left_y + (key_height + vertical_key_gap) * 3)
 
