@@ -19,6 +19,7 @@ class Application(tk.Frame):
 
         self.text = tk.Text(frame_top, bg='white', borderwidth=2, relief='groove', font=('Arial', 20))
         self.text.place(x=0, y=0, width=window_width, height=frame_top_height)
+        self.text.bind("<Triple-1>", self.mouse_left_triple)
 
         # the middle frame is used to list word candidates (four labels)
         frame_middle = tk.Frame(self.master)
@@ -81,7 +82,8 @@ class Application(tk.Frame):
             # new_label = first_label + key_pressed  # old text + newly pressed key
             new_label = key_pressed
             self.label_word_candidates[0].config(text=new_label)
-
+    def mouse_left_triple(self, event):
+        print('triple')
     def switch_command_mode_status(self):
         self.command_mode_status = True if (self.command_mode_status is False) else False
         print(f'Command mode: {self.command_mode_status}')
