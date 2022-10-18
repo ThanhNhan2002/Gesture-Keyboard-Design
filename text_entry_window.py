@@ -83,7 +83,8 @@ class Application(tk.Frame):
             self.label_word_candidates[0].config(text=new_label)
 
     def switch_command_mode_status(self):
-        self.command_mode_status = True if (self.command_mode_status == False) else False
+        self.command_mode_status = True if (self.command_mode_status is False) else False
+        print(f'Command mode: {self.command_mode_status}')
 
     def execute_command(self, command):
         if len(command) > 0 and command in self.possible_commands:
@@ -107,19 +108,20 @@ class Application(tk.Frame):
         self.cursor_move_position_list.append([event.x, event.y, 0])  # store x, y, segment tag
         self.keyboard.key_press(event.x, event.y)
         self.gesture_points.clear()
-
         #self.gesture_points.append(Point(event.x, event.y))
 
 
     # release mouse left button
     def mouse_left_button_release(self, event):
-        previous_x = self.cursor_move_position_list[-1][0]
-        previous_y = self.cursor_move_position_list[-1][1]
-        line_tag = self.canvas_keyboard.create_line(previous_x, previous_y, event.x, event.y)
-        self.cursor_move_position_list.append([event.x, event.y, line_tag])
+        if (len(self.cursor_move_position_list) > 0):
+            previous_x = self.cursor_move_position_list[-1][0]
+            previous_y = self.cursor_move_position_list[-1][1]
+            line_tag = self.canvas_keyboard.create_line(previous_x, previous_y, event.x, event.y)
+            self.cursor_move_position_list.append([event.x, event.y, line_tag])
 
-        self.keyboard.key_release(event.x, event.y)
+            self.keyboard.key_release(event.x, event.y)
         result = self.word_recognizer.recognize(self.gesture_points)
+        key = self.keyboard.get_key_pressed()
         if self.command_mode_status == False:
             if len(result) > 0:
                 for i in range(len(result)):
@@ -128,12 +130,13 @@ class Application(tk.Frame):
                     else:
                         break
             else:
-                key = self.keyboard.get_key_pressed()
                 if key == '<--':  # remove the final character from the text
                     length = len(self.text.get("1.0", 'end-1c'))
                     # print(length)
                     if length > 0:
-                        self.text.delete("end-2c") # remover the last character
+                        self.text.delete("end-2c") # remove the last character
+                elif key == 'Cmd':
+                    self.switch_command_mode_status()
                 '''
                 else:  # not the delete key ("<--")
                     characters = self.label_word_candidates[0].cget("text")
@@ -144,19 +147,22 @@ class Application(tk.Frame):
         else: # pNote: this means that command mode is on
             if len(result) > 0:
                 self.execute_command(result[0][1])
+            else:
+                if key == 'Cmd':
+                    self.switch_command_mode_status()
 
-
-            
         if len(self.cursor_move_position_list) > 1:  # delete cursor trajectory
             for x in self.cursor_move_position_list[1:]:
                 self.canvas_keyboard.delete(x[2])
+            self.cursor_move_position_list = []
 
     # users drag the mouse cursor on the keyboard while pressing the left button: drawing gestures on the keyboard
     def mouse_move_left_button_down(self, event):
-        previous_x = self.cursor_move_position_list[-1][0]
-        previous_y = self.cursor_move_position_list[-1][1]
+        if (len(self.cursor_move_position_list) > 0):
+            previous_x = self.cursor_move_position_list[-1][0]
+            previous_y = self.cursor_move_position_list[-1][1]
 
-        line_tag = self.canvas_keyboard.create_line(previous_x, previous_y, event.x, event.y)  # draw a line
+            line_tag = self.canvas_keyboard.create_line(previous_x, previous_y, event.x, event.y)  # draw a line
         self.cursor_move_position_list.append([event.x, event.y, line_tag])
 
         self.keyboard.mouse_move_left_button_down(event.x, event.y)
