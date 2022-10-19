@@ -82,11 +82,20 @@ class Application(tk.Frame):
             # new_label = first_label + key_pressed  # old text + newly pressed key
             new_label = key_pressed
             self.label_word_candidates[0].config(text=new_label)
+
     def mouse_left_triple(self, event):
-        print('triple')
+        self.switch_command_mode_status()
+
     def switch_command_mode_status(self):
         self.command_mode_status = True if (self.command_mode_status is False) else False
         print(f'Command mode: {self.command_mode_status}')
+        if self.command_mode_status:
+            self.clear_word_labels()
+
+
+    def clear_word_labels(self):  # clear the content of all word labels
+        for i in range(len(self.label_word_candidates)):  # clear the content of all word labels
+            self.label_word_candidates[i].config(text='')
 
     def execute_command(self, command):
         if len(command) > 0 and command in self.possible_commands:
@@ -102,8 +111,8 @@ class Application(tk.Frame):
         self.text.insert(tk.END, btn.cget('text')) # show it to the text widget
         # pNote: text widget is in frame top
 
-        for i in range(len(self.label_word_candidates)): # clear the content of all word labels
-            self.label_word_candidates[i].config(text='')
+        self.clear_word_labels()
+
 
     # press mouse left button
     def mouse_left_button_press(self, event):
