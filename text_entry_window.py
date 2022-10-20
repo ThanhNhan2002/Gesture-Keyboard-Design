@@ -4,6 +4,8 @@ import keyboard_design as kd
 import recognizer
 from template import Point, WordTemplates
 
+# pNote
+import tkinter.messagebox
 
 class Application(tk.Frame):
     def __init__(self, window_width, window_height, master=None):
@@ -56,7 +58,6 @@ class Application(tk.Frame):
         self.canvas_keyboard.bind("<ButtonPress-1>", self.mouse_left_button_press)
         self.canvas_keyboard.bind("<ButtonRelease-1>", self.mouse_left_button_release)
         self.canvas_keyboard.bind("<B1-Motion>", self.mouse_move_left_button_down)
-        self.canvas_keyboard.bind("<Double-Button-1>", self.double_click)
 
         self.canvas_keyboard.bind("<ButtonPress-3>", self.mouse_right_button_press)
         self.canvas_keyboard.bind("<ButtonRelease-3>", self.mouse_right_button_release)
@@ -73,19 +74,21 @@ class Application(tk.Frame):
         # pNote:
         self.command_mode_status = False
         self.possible_commands = ['copy', 'redo', 'undo', 'save']
+
         self.just_triple_click = False
         self.just_triple_click_letter = ''
+        self.triple_click_done = False
     def double_click(self, event):
         key_pressed = self.keyboard.get_key_pressed()  # return pressed key in a string format
         if(key_pressed == 'Caps'):
             self.switch_command_mode_status()
             print(f'command mode: {self.command_mode_status}')
-        else:
+        # else:
             # Label.cget() returns the old text in label 1 a string format
             # first_label = self.label_word_candidates[0].cget("text")
             # new_label = first_label + key_pressed  # old text + newly pressed key
-            new_label = key_pressed
-            self.label_word_candidates[0].config(text=new_label)
+            # new_label = key_pressed
+            # self.label_word_candidates[0].config(text=new_label)
 
     def mouse_left_triple(self, event):
         self.switch_command_mode_status()
@@ -93,6 +96,7 @@ class Application(tk.Frame):
     def mouse_left_triple_keyboard(self, event):
         self.just_triple_click = True
         self.just_triple_click_letter = self.keyboard.get_key_pressed()
+        self.triple_click_done = False
         print(f"Triple recognized: {self.just_triple_click_letter}")
 
 
@@ -107,10 +111,20 @@ class Application(tk.Frame):
             self.label_word_candidates[i].config(text='')
 
     def execute_command(self, command):
+        message = ''
         if len(command) > 0 and command in self.possible_commands:
-            print(f'Command input: {command}')
+            # print(f'Command input: {command}')
+            message = f'Command input: {command}'
+            # tk.messagebox.showinfo(title="Message box", message=message)
         else:
-            print(f'Not a command')
+            # print(f'Not a command')
+            message = f'Not a command'
+        tk.messagebox.showinfo(title="Message box", message=message)
+        # tk.messagebox.showinfo(title="just_triple_click_letter", message=self.just_triple_click_letter)
+        # tk.messagebox.showinfo(title="just_triple_click", message= self.just_triple_click)
+        # print(f'triple-click-letter: {self.just_triple_click_letter}')
+        # print(f'just_triple_click: {self.just_triple_click}')
+        # print(f'triple_click_done: {self.triple_click_done}')
 
     # when users select a word candidate from the four labels in the middle frame
     def select_word_candidate(self, event):
@@ -141,19 +155,25 @@ class Application(tk.Frame):
             self.keyboard.key_release(event.x, event.y)
         result = self.word_recognizer.recognize(self.gesture_points)
         key = self.keyboard.get_key_pressed()
-        if self.command_mode_status == False:
+        if not self.command_mode_status:
             if len(result) > 0:  # pNote: valid result, system returns some recommendation
-                if (self.just_triple_click == True):
-                    # pNote: if users just have triple-clicked a letter,
-                    # check if it is the beginning of a command
-                    # e.g. if triple-clicked letter 's', then the command must be 'save'
-                    # triple-clicked letter 's' and then entering command 'undo' is not accepted
-                    if result[0][1] in self.possible_commands and result[0][1][0].upper() == self.just_triple_click_letter.upper():
-                        self.execute_command(result[0][1])
-                    else:
-                        self.execute_command('Not a command')
-                    self.just_triple_click = False
-                    self.just_triple_click_letter = ''
+                if self.just_triple_click:
+                    print('called from inside if self.just_triple_click')
+                    if self.triple_click_done:
+                        # pNote: if users just have triple-clicked a letter,
+                        # check if it is the beginning of a command
+                        # e.g. if triple-clicked letter 's', then the command must be 'save'
+                        # triple-clicked letter 's' and then entering command 'undo' is not accepted
+                        if result[0][1] in self.possible_commands and result[0][1][0].upper() == self.just_triple_click_letter.upper():
+                            self.execute_command(result[0][1])
+                        else:
+                            self.execute_command('Not a command')
+                        self.just_triple_click = False
+                        self.just_triple_click_letter = ''
+                        self.triple_click_done = False
+                    elif self.just_triple_click and not self.triple_click_done:  # self.triple_click_done = false
+                        self.triple_click_done = True
+
 
                 else: # then it's not a request for command input, show the suggestions
                     for i in range(len(result)):
@@ -164,7 +184,6 @@ class Application(tk.Frame):
             else:  # pNote: invalid result, aka only 1 button is pressed, not a pattern
                 if key == '<--':  # remove the final character from the text
                     length = len(self.text.get("1.0", 'end-1c'))
-                    # print(length)
                     if length > 0:
                         self.text.delete("end-2c") # remove the last character
                 elif key == 'Cmd':
