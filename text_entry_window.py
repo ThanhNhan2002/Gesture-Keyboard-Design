@@ -62,6 +62,8 @@ class Application(tk.Frame):
         self.canvas_keyboard.bind("<ButtonRelease-3>", self.mouse_right_button_release)
         self.canvas_keyboard.bind("<B3-Motion>", self.mouse_move_right_button_down)
 
+        self.canvas_keyboard.bind("<Triple-1>", self.mouse_left_triple_keyboard)
+
         # store x, y, segment tag
         self.cursor_move_position_list = []
 
@@ -71,6 +73,8 @@ class Application(tk.Frame):
         # pNote:
         self.command_mode_status = False
         self.possible_commands = ['copy', 'redo', 'undo', 'save']
+        self.just_triple_click = False
+        self.just_triple_click_letter = ''
     def double_click(self, event):
         key_pressed = self.keyboard.get_key_pressed()  # return pressed key in a string format
         if(key_pressed == 'Caps'):
@@ -86,12 +90,17 @@ class Application(tk.Frame):
     def mouse_left_triple(self, event):
         self.switch_command_mode_status()
 
+    def mouse_left_triple_keyboard(self, event):
+        self.just_triple_click = True
+        self.just_triple_click_letter = self.keyboard.get_key_pressed()
+        print(f"Triple recognized: {self.just_triple_click_letter}")
+
+
     def switch_command_mode_status(self):
         self.command_mode_status = True if (self.command_mode_status is False) else False
         print(f'Command mode: {self.command_mode_status}')
         if self.command_mode_status:
             self.clear_word_labels()
-
 
     def clear_word_labels(self):  # clear the content of all word labels
         for i in range(len(self.label_word_candidates)):  # clear the content of all word labels
@@ -108,11 +117,10 @@ class Application(tk.Frame):
         btn = event.widget  # event.widget is the widget that called the event
                             # pNote: here is the Label
         #self.label_show_text.config(text=btn.cget('text'))
-        self.text.insert(tk.END, btn.cget('text')) # show it to the text widget
+        self.text.insert(tk.END, btn.cget('text') + " ") # show it to the text widget
         # pNote: text widget is in frame top
 
         self.clear_word_labels()
-
 
     # press mouse left button
     def mouse_left_button_press(self, event):
@@ -134,13 +142,26 @@ class Application(tk.Frame):
         result = self.word_recognizer.recognize(self.gesture_points)
         key = self.keyboard.get_key_pressed()
         if self.command_mode_status == False:
-            if len(result) > 0:
-                for i in range(len(result)):
-                    if i < len(self.label_word_candidates):
-                        self.label_word_candidates[i].config(text=result[i][1])
+            if len(result) > 0:  # pNote: valid result, system returns some recommendation
+                if (self.just_triple_click == True):
+                    # pNote: if users just have triple-clicked a letter,
+                    # check if it is the beginning of a command
+                    # e.g. if triple-clicked letter 's', then the command must be 'save'
+                    # triple-clicked letter 's' and then entering command 'undo' is not accepted
+                    if result[0][1] in self.possible_commands and result[0][1][0].upper() == self.just_triple_click_letter.upper():
+                        self.execute_command(result[0][1])
                     else:
-                        break
-            else:
+                        self.execute_command('Not a command')
+                    self.just_triple_click = False
+                    self.just_triple_click_letter = ''
+
+                else: # then it's not a request for command input, show the suggestions
+                    for i in range(len(result)):
+                        if i < len(self.label_word_candidates):
+                            self.label_word_candidates[i].config(text=result[i][1])
+                        else:
+                            break
+            else:  # pNote: invalid result, aka only 1 button is pressed, not a pattern
                 if key == '<--':  # remove the final character from the text
                     length = len(self.text.get("1.0", 'end-1c'))
                     # print(length)
@@ -174,7 +195,7 @@ class Application(tk.Frame):
             previous_y = self.cursor_move_position_list[-1][1]
 
             line_tag = self.canvas_keyboard.create_line(previous_x, previous_y, event.x, event.y)  # draw a line
-        self.cursor_move_position_list.append([event.x, event.y, line_tag])
+            self.cursor_move_position_list.append([event.x, event.y, line_tag])
 
         self.keyboard.mouse_move_left_button_down(event.x, event.y)
         self.gesture_points.append(Point(event.x, event.y)) # store all cursor movement points
@@ -209,10 +230,11 @@ class Application(tk.Frame):
 
     # release mouse right button
     def mouse_right_button_release(self, event):
-        previous_x = self.cursor_move_position_list[-1][0]
-        previous_y = self.cursor_move_position_list[-1][1]
-        line_tag = self.canvas_keyboard.create_line(previous_x, previous_y, event.x, event.y)
-        self.cursor_move_position_list.append([event.x, event.y, line_tag])
+        if (len(self.cursor_move_position_list) > 0):
+            previous_x = self.cursor_move_position_list[-1][0]
+            previous_y = self.cursor_move_position_list[-1][1]
+            line_tag = self.canvas_keyboard.create_line(previous_x, previous_y, event.x, event.y)
+            self.cursor_move_position_list.append([event.x, event.y, line_tag])
 
         self.keyboard.key_release(event.x, event.y)
         result = self.word_recognizer.recognize(self.gesture_points)
@@ -226,11 +248,12 @@ class Application(tk.Frame):
 
     # users drag the mouse cursor on the keyboard while pressing the left button: drawing gestures on the keyboard
     def mouse_move_right_button_down(self, event):
-        previous_x = self.cursor_move_position_list[-1][0]
-        previous_y = self.cursor_move_position_list[-1][1]
+        if (len(self.cursor_move_position_list) > 0):
+            previous_x = self.cursor_move_position_list[-1][0]
+            previous_y = self.cursor_move_position_list[-1][1]
 
-        line_tag = self.canvas_keyboard.create_line(previous_x, previous_y, event.x, event.y)  # draw a line
-        self.cursor_move_position_list.append([event.x, event.y, line_tag])
+            line_tag = self.canvas_keyboard.create_line(previous_x, previous_y, event.x, event.y)  # draw a line
+            self.cursor_move_position_list.append([event.x, event.y, line_tag])
 
         self.keyboard.mouse_move_left_button_down(event.x, event.y)
         self.gesture_points.append(Point(event.x, event.y))  # store all cursor movement points
