@@ -4,6 +4,8 @@ import keyboard_design as kd
 import recognizer
 from template import Point, WordTemplates
 
+# pNote
+import tkinter.messagebox
 
 class Application(tk.Frame):
     def __init__(self, window_width, window_height, master=None):
@@ -19,6 +21,7 @@ class Application(tk.Frame):
 
         self.text = tk.Text(frame_top, bg='white', borderwidth=2, relief='groove', font=('Arial', 20))
         self.text.place(x=0, y=0, width=window_width, height=frame_top_height)
+        self.text.bind("<Double-Button-1>", self.text_left_double)
 
         # the middle frame is used to list word candidates (four labels)
         frame_middle = tk.Frame(self.master)
@@ -55,7 +58,8 @@ class Application(tk.Frame):
         self.canvas_keyboard.bind("<ButtonPress-1>", self.mouse_left_button_press)
         self.canvas_keyboard.bind("<ButtonRelease-1>", self.mouse_left_button_release)
         self.canvas_keyboard.bind("<B1-Motion>", self.mouse_move_left_button_down)
-        self.canvas_keyboard.bind("<Double-Button-1>", self.double_click)
+        self.canvas_keyboard.bind("<Double-Button-1>", self.left_double_click)
+        self.canvas_keyboard.bind("<Triple-1>", self.left_triple_click)
 
         # store x, y, segment tag
         self.cursor_move_position_list = []
@@ -66,20 +70,39 @@ class Application(tk.Frame):
         # pNote:
         self.command_mode_status = False
         self.possible_commands = ['copy', 'redo', 'undo', 'save']
-    def double_click(self, event):
+        self.just_left_triple = False
+        self.just_triple_click_letter = ''
+
+    def text_left_double(self, event):
+        self.switch_command_mode_status()
+
+    def left_double_click(self, event):
         key_pressed = self.keyboard.get_key_pressed()  # return pressed key in a string format
-        if(key_pressed == 'Caps'):
+        if key_pressed == 'Caps':
             self.switch_command_mode_status()
-            print(f'command mode: {self.command_mode_status}')
-        else:
-            # Label.cget() returns the old text in label 1 a string format
-            # first_label = self.label_word_candidates[0].cget("text")
-            # new_label = first_label + key_pressed  # old text + newly pressed key
-            new_label = key_pressed
-            self.label_word_candidates[0].config(text=new_label)
+
+    def left_triple_click(self, event):
+        self.just_triple_click_letter = self.keyboard.get_key_pressed()
+        if self.just_triple_click_letter.upper() in ['C', 'R', 'U', 'S']:
+            self.just_left_triple = True
 
     def switch_command_mode_status(self):
-        self.command_mode_status = True if (self.command_mode_status == False) else False
+        self.command_mode_status = True if (self.command_mode_status is False) else False
+        print(f'Command mode: {self.command_mode_status}')
+        if self.command_mode_status:
+            self.clear_word_labels()
+
+    def clear_word_labels(self):  # clear the content of all word labels
+        for i in range(len(self.label_word_candidates)):  # clear the content of all word labels
+            self.label_word_candidates[i].config(text='')
+
+    def execute_command(self, command):
+        message = ''
+        if len(command) > 0 and command in self.possible_commands:
+            message = f'Command input: {command}'
+        else:
+            message = f'Not a command'
+        tk.messagebox.showinfo(title="Message box", message=message)
 
     # when users select a word candidate from the four labels in the middle frame
     def select_word_candidate(self, event):
@@ -98,6 +121,9 @@ class Application(tk.Frame):
         self.keyboard.key_press(event.x, event.y)
         self.gesture_points.clear()
 
+        if self.just_left_triple:
+            self.switch_command_mode_status()
+
         #self.gesture_points.append(Point(event.x, event.y))
 
 
@@ -109,12 +135,15 @@ class Application(tk.Frame):
         self.cursor_move_position_list.append([event.x, event.y, line_tag])
 
         self.keyboard.key_release(event.x, event.y)
+
+        # run the recognizer
         result = self.word_recognizer.recognize(self.gesture_points)
-        if self.command_mode_status == False:
+        if not self.command_mode_status:
             if len(result) > 0:
                 for i in range(len(result)):
                     if i < len(self.label_word_candidates):
-                        self.label_word_candidates[i].config(text=result[i][1])
+                        # show the suggestions
+                        self.label_word_candidates[i].config(text=result[i][1] + ' ')
                     else:
                         break
             else:
@@ -131,10 +160,20 @@ class Application(tk.Frame):
                     self.label_word_candidates[0].config(
                         text=characters)  # only one key was pressed
                 '''
-        else: # pNote: this means that command mode is on
+        else:  # pNote: this means that command mode is on
             if len(result) > 0:
-                if result[0][1] in self.possible_commands:
-                    print(f'Command input: {result[0][1]}')
+                if self.just_left_triple:
+                    if result[0][1] in self.possible_commands and result[0][1][0].upper() == self.just_triple_click_letter.upper():
+                        self.execute_command(result[0][1])
+                    else:
+                        self.execute_command('Not a command')
+                    self.just_left_triple = False
+                else:
+                    self.execute_command(result[0][1])
+        self.command_mode_status = False
+
+
+
             
         if len(self.cursor_move_position_list) > 1:  # delete cursor trajectory
             for x in self.cursor_move_position_list[1:]:
