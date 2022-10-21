@@ -78,6 +78,7 @@ class Application(tk.Frame):
         self.just_triple_click = False
         self.just_triple_click_letter = ''
         self.triple_click_done = False
+        self.press_after_triple = False
     def double_click(self, event):
         key_pressed = self.keyboard.get_key_pressed()  # return pressed key in a string format
         if(key_pressed == 'Caps'):
@@ -141,6 +142,8 @@ class Application(tk.Frame):
         self.cursor_move_position_list.append([event.x, event.y, 0])  # store x, y, segment tag
         self.keyboard.key_press(event.x, event.y)
         self.gesture_points.clear()
+        if self.triple_click_done:
+            self.press_after_triple = True;
         #self.gesture_points.append(Point(event.x, event.y))
 
 
@@ -153,27 +156,35 @@ class Application(tk.Frame):
             self.cursor_move_position_list.append([event.x, event.y, line_tag])
 
             self.keyboard.key_release(event.x, event.y)
-        result = self.word_recognizer.recognize(self.gesture_points)
-        key = self.keyboard.get_key_pressed()
+        if self.just_triple_click and not self.triple_click_done:  # self.triple_click_done = false
+            self.triple_click_done = True
+        result = self.word_recognizer.recognize(self.gesture_points)  # pNote: result of the pattern
+        key = self.keyboard.get_key_pressed()  # pNote: last pressed key
+        print(f'result: {result}')
         if not self.command_mode_status:
             if len(result) > 0:  # pNote: valid result, system returns some recommendation
-                if self.just_triple_click:
-                    print('called from inside if self.just_triple_click')
-                    if self.triple_click_done:
-                        # pNote: if users just have triple-clicked a letter,
-                        # check if it is the beginning of a command
-                        # e.g. if triple-clicked letter 's', then the command must be 'save'
-                        # triple-clicked letter 's' and then entering command 'undo' is not accepted
-                        if result[0][1] in self.possible_commands and result[0][1][0].upper() == self.just_triple_click_letter.upper():
-                            self.execute_command(result[0][1])
-                        else:
-                            self.execute_command('Not a command')
-                        self.just_triple_click = False
-                        self.just_triple_click_letter = ''
-                        self.triple_click_done = False
-                    elif self.just_triple_click and not self.triple_click_done:  # self.triple_click_done = false
-                        self.triple_click_done = True
-
+                print(f'result > 0')
+                print('called from inside if self.just_triple_click')
+                print(f'is triple click done: {self.triple_click_done}')
+                if self.press_after_triple:
+                    # pNote: if users just have triple-clicked a letter,
+                    # check if it is the beginning of a command
+                    # e.g. if triple-clicked letter 's', then the command must be 'save'
+                    # triple-clicked letter 's' and then entering command 'undo' is not accepted
+                    print(f'first letter of the result: {result[0][1][0].upper()}')
+                    print(f'triple-clicked letter: { self.just_triple_click_letter.upper()}')
+                    if result[0][1] in self.possible_commands and result[0][1][0].upper() == self.just_triple_click_letter.upper():
+                        self.execute_command(result[0][1])
+                    else:
+                        self.execute_command('Not a command')
+                    self.just_triple_click = False
+                    self.just_triple_click_letter = ''
+                    self.triple_click_done = False
+                    self.press_after_triple = False
+                # elif self.just_triple_click and not self.triple_click_done:  # self.triple_click_done = false
+                #     self.triple_click_done = True
+                elif self.just_triple_click and not self.press_after_triple:
+                    self.clear_word_labels()
 
                 else: # then it's not a request for command input, show the suggestions
                     for i in range(len(result)):
