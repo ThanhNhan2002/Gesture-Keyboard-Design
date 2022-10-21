@@ -58,6 +58,7 @@ class Application(tk.Frame):
         self.canvas_keyboard.bind("<ButtonPress-1>", self.mouse_left_button_press)
         self.canvas_keyboard.bind("<ButtonRelease-1>", self.mouse_left_button_release)
         self.canvas_keyboard.bind("<B1-Motion>", self.mouse_move_left_button_down)
+        self.canvas_keyboard.bind("<Double-Button-1>", self.left_double_click)
 
         self.canvas_keyboard.bind("<ButtonPress-3>", self.mouse_right_button_press)
         self.canvas_keyboard.bind("<ButtonRelease-3>", self.mouse_right_button_release)
@@ -79,11 +80,10 @@ class Application(tk.Frame):
         self.just_triple_click_letter = ''
         self.triple_click_done = False
         self.press_after_triple = False
-    def double_click(self, event):
+    def left_double_click(self, event):
         key_pressed = self.keyboard.get_key_pressed()  # return pressed key in a string format
         if(key_pressed == 'Caps'):
             self.switch_command_mode_status()
-            print(f'command mode: {self.command_mode_status}')
         # else:
             # Label.cget() returns the old text in label 1 a string format
             # first_label = self.label_word_candidates[0].cget("text")
@@ -98,8 +98,6 @@ class Application(tk.Frame):
         self.just_triple_click = True
         self.just_triple_click_letter = self.keyboard.get_key_pressed()
         self.triple_click_done = False
-        print(f"Triple recognized: {self.just_triple_click_letter}")
-
 
     def switch_command_mode_status(self):
         self.command_mode_status = True if (self.command_mode_status is False) else False
@@ -146,7 +144,6 @@ class Application(tk.Frame):
             self.press_after_triple = True;
         #self.gesture_points.append(Point(event.x, event.y))
 
-
     # release mouse left button
     def mouse_left_button_release(self, event):
         if (len(self.cursor_move_position_list) > 0):
@@ -156,8 +153,11 @@ class Application(tk.Frame):
             self.cursor_move_position_list.append([event.x, event.y, line_tag])
 
             self.keyboard.key_release(event.x, event.y)
+        # if it is in this stage, then a letter has been pressed 3 times and and the 3rd release has been done
+        # then, we must consider that the progress of triple-clicking a letter has been finished
         if self.just_triple_click and not self.triple_click_done:  # self.triple_click_done = false
             self.triple_click_done = True
+
         result = self.word_recognizer.recognize(self.gesture_points)  # pNote: result of the pattern
         key = self.keyboard.get_key_pressed()  # pNote: last pressed key
         print(f'result: {result}')
@@ -167,7 +167,7 @@ class Application(tk.Frame):
                 print('called from inside if self.just_triple_click')
                 print(f'is triple click done: {self.triple_click_done}')
                 if self.press_after_triple:
-                    # pNote: if users just have triple-clicked a letter,
+                    # pNote: if users just have drawn a pattern after triple-clicking a letter,
                     # check if it is the beginning of a command
                     # e.g. if triple-clicked letter 's', then the command must be 'save'
                     # triple-clicked letter 's' and then entering command 'undo' is not accepted
@@ -186,7 +186,7 @@ class Application(tk.Frame):
                 elif self.just_triple_click and not self.press_after_triple:
                     self.clear_word_labels()
 
-                else: # then it's not a request for command input, show the suggestions
+                else:  # then it's not a request for command input, show the suggestions
                     for i in range(len(result)):
                         if i < len(self.label_word_candidates):
                             self.label_word_candidates[i].config(text=result[i][1])
@@ -228,7 +228,7 @@ class Application(tk.Frame):
             self.cursor_move_position_list.append([event.x, event.y, line_tag])
 
         self.keyboard.mouse_move_left_button_down(event.x, event.y)
-        self.gesture_points.append(Point(event.x, event.y)) # store all cursor movement points
+        self.gesture_points.append(Point(event.x, event.y))  # store all cursor movement points
 
 
 
