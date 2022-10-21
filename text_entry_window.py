@@ -58,7 +58,7 @@ class Application(tk.Frame):
         self.canvas_keyboard.bind("<ButtonPress-1>", self.mouse_left_button_press)
         self.canvas_keyboard.bind("<ButtonRelease-1>", self.mouse_left_button_release)
         self.canvas_keyboard.bind("<B1-Motion>", self.mouse_move_left_button_down)
-        self.canvas_keyboard.bind("<Double-Button-1>", self.left_double_click)
+        # self.canvas_keyboard.bind("<Double-Button-1>", self.left_double_click)
         self.canvas_keyboard.bind("<Triple-1>", self.left_triple_click)
 
         # store x, y, segment tag
@@ -73,18 +73,6 @@ class Application(tk.Frame):
         self.just_left_triple = False
         self.just_triple_click_letter = ''
 
-    def text_left_double(self, event):
-        self.switch_command_mode_status()
-
-    def left_double_click(self, event):
-        key_pressed = self.keyboard.get_key_pressed()  # return pressed key in a string format
-        if key_pressed == 'Caps':
-            self.switch_command_mode_status()
-
-    def left_triple_click(self, event):
-        self.just_triple_click_letter = self.keyboard.get_key_pressed()
-        if self.just_triple_click_letter.upper() in ['C', 'R', 'U', 'S']:
-            self.just_left_triple = True
 
     def switch_command_mode_status(self):
         self.command_mode_status = True if (self.command_mode_status is False) else False
@@ -115,6 +103,20 @@ class Application(tk.Frame):
         for i in range(len(self.label_word_candidates)): # clear the content of all word labels
             self.label_word_candidates[i].config(text='')
 
+    def text_left_double(self, event):
+        self.switch_command_mode_status()
+
+    def left_double_click(self, event):
+        key_pressed = self.keyboard.get_key_pressed()  # return pressed key in a string format
+        if key_pressed == 'Caps':
+            self.switch_command_mode_status()
+
+    def left_triple_click(self, event):
+        self.just_triple_click_letter = self.keyboard.get_key_pressed()
+        if self.just_triple_click_letter.upper() in ['C', 'R', 'U', 'S']:
+            self.just_left_triple = True
+            print('triple recognized')
+
     # press mouse left button
     def mouse_left_button_press(self, event):
         self.cursor_move_position_list.append([event.x, event.y, 0])  # store x, y, segment tag
@@ -123,6 +125,7 @@ class Application(tk.Frame):
 
         if self.just_left_triple:
             self.switch_command_mode_status()
+            # self.just_left_triple = False
 
         #self.gesture_points.append(Point(event.x, event.y))
 
@@ -140,12 +143,15 @@ class Application(tk.Frame):
         result = self.word_recognizer.recognize(self.gesture_points)
         if not self.command_mode_status:
             if len(result) > 0:
-                for i in range(len(result)):
-                    if i < len(self.label_word_candidates):
-                        # show the suggestions
-                        self.label_word_candidates[i].config(text=result[i][1] + ' ')
-                    else:
-                        break
+                if not self.just_left_triple:
+                    for i in range(len(result)):
+                        if i < len(self.label_word_candidates):
+                            # show the suggestions
+                            self.label_word_candidates[i].config(text=result[i][1] + ' ')
+                        else:
+                            break
+                else:
+                    pass  #do nothing
             else:
                 key = self.keyboard.get_key_pressed()
                 if key == '<--':  # remove the final character from the text
@@ -170,8 +176,11 @@ class Application(tk.Frame):
                     self.just_left_triple = False
                 else:
                     self.execute_command(result[0][1])
-        self.command_mode_status = False
-
+            else:
+                self.execute_command('Not a command')
+            print('just have turn off command mode')
+            self.command_mode_status = False
+            self.just_left_triple = False
 
 
             
