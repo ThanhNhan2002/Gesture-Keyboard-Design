@@ -141,46 +141,66 @@ class Application(tk.Frame):
 
         # run the recognizer
         result = self.word_recognizer.recognize(self.gesture_points)
+        print(f"result: {result}")
         if not self.command_mode_status:
-            if len(result) > 0:
-                if not self.just_left_triple:
-                    for i in range(len(result)):
-                        if i < len(self.label_word_candidates):
-                            # show the suggestions
-                            self.label_word_candidates[i].config(text=result[i][1] + ' ')
-                        else:
-                            break
-                else:
-                    pass  #do nothing
-            else:
+            if (len(result) > 0) and (not self.just_left_triple):
+                for i in range(len(result)):
+                    if i < len(self.label_word_candidates):
+                        # show the suggestions
+                        self.label_word_candidates[i].config(text=result[i][1] + ' ')
+                    else:
+                        break
+            elif (not len(result) > 0):
                 key = self.keyboard.get_key_pressed()
                 if key == '<--':  # remove the final character from the text
                     length = len(self.text.get("1.0", 'end-1c'))
-                    # print(length)
                     if length > 0:
                         self.text.delete("end-2c") # remover the last character
-                '''
-                else:  # not the delete key ("<--")
-                    characters = self.label_word_candidates[0].cget("text")
-                    characters += self.keyboard.get_key_pressed().lower()  # convert to lowercase
-                    self.label_word_candidates[0].config(
-                        text=characters)  # only one key was pressed
-                '''
-        else:  # pNote: this means that command mode is on
+
+        #     if len(result) > 0:
+        #         if not self.just_left_triple:
+        #             for i in range(len(result)):
+        #                 if i < len(self.label_word_candidates):
+        #                     # show the suggestions
+        #                     self.label_word_candidates[i].config(text=result[i][1] + ' ')
+        #                 else:
+        #                     break
+        #     else:  # result is only empty if it is a single click
+        #         key = self.keyboard.get_key_pressed()
+        #         if key == '<--':  # remove the final character from the text
+        #             length = len(self.text.get("1.0", 'end-1c'))
+        #             # print(length)
+        #             if length > 0:
+        #                 self.text.delete("end-2c") # remover the last character
+        else:
             if len(result) > 0:
-                if self.just_left_triple:
-                    if result[0][1] in self.possible_commands and result[0][1][0].upper() == self.just_triple_click_letter.upper():
-                        self.execute_command(result[0][1])
-                    else:
-                        self.execute_command('Not a command')
-                    self.just_left_triple = False
-                else:
+                if (not self.just_left_triple) or \
+                    (self.just_left_triple \
+                     and result[0][1] in self.possible_commands and result[0][1][0].upper() == self.just_triple_click_letter.upper()):
                     self.execute_command(result[0][1])
+                else:
+                    self.execute_command('Not a command')
             else:
                 self.execute_command('Not a command')
             print('just have turn off command mode')
             self.command_mode_status = False
             self.just_left_triple = False
+        # else:
+        #     # pNote: this means that command mode is on
+        #     if len(result) > 0:
+        #         if self.just_left_triple:
+        #             if result[0][1] in self.possible_commands and result[0][1][0].upper() == self.just_triple_click_letter.upper():
+        #                 self.execute_command(result[0][1])
+        #             else:
+        #                 self.execute_command('Not a command')
+        #             self.just_left_triple = False
+        #         else:
+        #             self.execute_command(result[0][1])
+        #     else:
+        #         self.execute_command('Not a command')
+        #     print('just have turn off command mode')
+        #     self.command_mode_status = False
+        #     self.just_left_triple = False
 
 
             
