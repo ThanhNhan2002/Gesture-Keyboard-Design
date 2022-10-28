@@ -7,15 +7,11 @@ from template import Point, WordTemplates
 # pNote
 import tkinter.messagebox
 
-# 1 cmd
-#
-# 2 caps
-#
-# 3 2-click text area
-#
-# 4 triple click
-#
-# 5 right mouse
+# 1 Cmd button
+# 2 Capslock double-clicking
+# 3 Text area double-clicking
+# 4 Triple click
+# 5 Right mouse button
 
 class Application(tk.Frame):
     def __init__(self, window_width, window_height, master=None):
@@ -43,7 +39,6 @@ class Application(tk.Frame):
             label_word = tk.Label(frame_middle, bg='white', borderwidth=2, relief='groove', font=15) #anchor='w',
             label_word.place(relx=i/word_candidate_num, relwidth=1/word_candidate_num, height=frame_middle_height)
             label_word.bind("<ButtonRelease-1>", self.select_word_candidate)
-            print(i/word_candidate_num)
             self.label_word_candidates.append(label_word)
 
         # the bottom frame is used to show the keyboard
@@ -137,7 +132,7 @@ class Application(tk.Frame):
         self.keyboard.key_press(event.x, event.y)
         self.gesture_points.clear()
 
-        if self.just_left_triple:
+        if self.just_left_triple and (not self.command_mode_status):
             self.switch_command_mode_status()
 
         #self.gesture_points.append(Point(event.x, event.y))
@@ -154,8 +149,11 @@ class Application(tk.Frame):
 
         # run the recognizer
         result = self.word_recognizer.recognize(self.gesture_points)
-        if not self.command_mode_status:  # not in command mode
-            if (len(result) > 0) and (not self.just_left_triple):  # if input is a pattern and just_left_triple is false:
+
+        # not in command mode
+        if not self.command_mode_status:
+            # if input is a pattern and just_left_triple is false:
+            if (len(result) > 0) and (not self.just_left_triple):
                 # show the candidates
                 for i in range(len(result)):
                     if i < len(self.label_word_candidates):
@@ -163,7 +161,8 @@ class Application(tk.Frame):
                         self.label_word_candidates[i].config(text=result[i][1] + ' ')
                     else:
                         break
-            elif (not len(result) > 0):  # if input is a simple click
+            # if input is a simple click
+            elif (not len(result) > 0):
                 # check if the simple click is a "delete" key
                 key = self.keyboard.get_key_pressed()
                 if key == '<--':  # remove the final character from the text
@@ -172,23 +171,23 @@ class Application(tk.Frame):
                         self.text.delete("end-2c") # remover the last character
                 elif key == 'Cmd':
                     self.switch_command_mode_status()
-        else:  # in command mode
-            if len(result) > 0:  # input is a pattern
+        # in command mode
+        else:
+            # input is a pattern
+            if len(result) > 0:
                 if self.just_left_triple:
                     if result[0][1] in self.possible_commands and result[0][1][0].upper() == self.just_triple_click_letter.upper():
                         self.execute_command(result[0][1])
                     else:
                         self.execute_command('Not a command')
                     self.just_left_triple = False
-
-                    self.command_mode_status = False
-                    print(f'Command mode: {self.command_mode_status}')
                 else:
                     self.execute_command(result[0][1])
 
-                    self.command_mode_status = False
-                    print(f'Command mode: {self.command_mode_status}')
-            else:  # singe click
+                self.command_mode_status = False
+                print(f'Command mode: {self.command_mode_status}')
+            # singe click
+            else:
                 key = self.keyboard.get_key_pressed()
                 if key == 'Cmd':
                     self.switch_command_mode_status()
@@ -209,6 +208,11 @@ class Application(tk.Frame):
 
         self.keyboard.mouse_move_left_button_down(event.x, event.y)
         self.gesture_points.append(Point(event.x, event.y)) # store all cursor movement points
+
+
+
+
+
 
 
     #right mouse button
