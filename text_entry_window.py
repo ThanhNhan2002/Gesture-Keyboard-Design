@@ -158,22 +158,21 @@ class Application(tk.Frame):
                         self.text.delete("end-2c") # remover the last character
         else:  # in command mode
             if len(result) > 0:  # input is a pattern
-                if (not self.just_left_triple) or \
-                   (self.just_left_triple \
-                    and result[0][1] in self.possible_commands and result[0][1][0].upper() == self.just_triple_click_letter.upper()):
-                # if not just triple-clicked or
-                # just have triple-clicked and 1st letter matched
-                    self.execute_command(result[0][1])
-                else:
-                    self.execute_command('Not a command')
-
-            else:  # input is a simple click
                 if self.just_left_triple:
-                    self.execute_command('Not a command')
+                    if result[0][1] in self.possible_commands and result[0][1][0].upper() == self.just_triple_click_letter.upper():
+                        self.execute_command(result[0][1])
+                    else:
+                        self.execute_command('Not a command')
+                    self.just_left_triple = False
 
-            self.command_mode_status = False
-            print(f'Command mode: {self.command_mode_status}')
-            self.just_left_triple = False
+                    self.command_mode_status = False
+                    print(f'Command mode: {self.command_mode_status}')
+                else:
+                    self.execute_command(result[0][1])
+
+                    self.command_mode_status = False
+                    print(f'Command mode: {self.command_mode_status}')
+
             
         if len(self.cursor_move_position_list) > 1:  # delete cursor trajectory
             for x in self.cursor_move_position_list[1:]:
