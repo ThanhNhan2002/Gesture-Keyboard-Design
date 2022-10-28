@@ -7,6 +7,16 @@ from template import Point, WordTemplates
 # pNote
 import tkinter.messagebox
 
+# 1 cmd
+#
+# 2 caps
+#
+# 3 2-click text area
+#
+# 4 triple click
+#
+# 5 right mouse
+
 class Application(tk.Frame):
     def __init__(self, window_width, window_height, master=None):
         super().__init__(master)  # Call tk.Frame.__init__(master)
@@ -156,6 +166,8 @@ class Application(tk.Frame):
                     length = len(self.text.get("1.0", 'end-1c'))
                     if length > 0:
                         self.text.delete("end-2c") # remover the last character
+                elif key == 'Cmd':
+                    self.switch_command_mode_status()
         else:  # in command mode
             if len(result) > 0:  # input is a pattern
                 if self.just_left_triple:
@@ -172,6 +184,10 @@ class Application(tk.Frame):
 
                     self.command_mode_status = False
                     print(f'Command mode: {self.command_mode_status}')
+            else:  # singe click
+                key = self.keyboard.get_key_pressed()
+                if key == 'Cmd':
+                    self.switch_command_mode_status()
 
             
         if len(self.cursor_move_position_list) > 1:  # delete cursor trajectory
