@@ -125,7 +125,6 @@ class Application(tk.Frame):
 
         if self.just_left_triple:
             self.switch_command_mode_status()
-            # self.just_left_triple = False
 
         #self.gesture_points.append(Point(event.x, event.y))
 
@@ -141,68 +140,36 @@ class Application(tk.Frame):
 
         # run the recognizer
         result = self.word_recognizer.recognize(self.gesture_points)
-        print(f"result: {result}")
-        if not self.command_mode_status:
-            if (len(result) > 0) and (not self.just_left_triple):
+        if not self.command_mode_status:  # not in command mode
+            if (len(result) > 0) and (not self.just_left_triple):  # if input is a pattern and just_left_triple is false:
+                # show the candidates
                 for i in range(len(result)):
                     if i < len(self.label_word_candidates):
                         # show the suggestions
                         self.label_word_candidates[i].config(text=result[i][1] + ' ')
                     else:
                         break
-            elif (not len(result) > 0):
+            elif (not len(result) > 0):  # if input is a simple click
+                # check if the simple click is a "delete" key
                 key = self.keyboard.get_key_pressed()
                 if key == '<--':  # remove the final character from the text
                     length = len(self.text.get("1.0", 'end-1c'))
                     if length > 0:
                         self.text.delete("end-2c") # remover the last character
-
-        #     if len(result) > 0:
-        #         if not self.just_left_triple:
-        #             for i in range(len(result)):
-        #                 if i < len(self.label_word_candidates):
-        #                     # show the suggestions
-        #                     self.label_word_candidates[i].config(text=result[i][1] + ' ')
-        #                 else:
-        #                     break
-        #     else:  # result is only empty if it is a single click
-        #         key = self.keyboard.get_key_pressed()
-        #         if key == '<--':  # remove the final character from the text
-        #             length = len(self.text.get("1.0", 'end-1c'))
-        #             # print(length)
-        #             if length > 0:
-        #                 self.text.delete("end-2c") # remover the last character
-        else:
-            if len(result) > 0:
+        else:  # in command mode
+            if len(result) > 0:  # input is a pattern
                 if (not self.just_left_triple) or \
-                    (self.just_left_triple \
-                     and result[0][1] in self.possible_commands and result[0][1][0].upper() == self.just_triple_click_letter.upper()):
+                   (self.just_left_triple \
+                    and result[0][1] in self.possible_commands and result[0][1][0].upper() == self.just_triple_click_letter.upper()):
+                # if not just triple-clicked or
+                # just have triple-clicked and 1st letter matched
                     self.execute_command(result[0][1])
                 else:
                     self.execute_command('Not a command')
-            else:
+            else:  # input is just a simple click
                 self.execute_command('Not a command')
-            print('just have turn off command mode')
             self.command_mode_status = False
             self.just_left_triple = False
-        # else:
-        #     # pNote: this means that command mode is on
-        #     if len(result) > 0:
-        #         if self.just_left_triple:
-        #             if result[0][1] in self.possible_commands and result[0][1][0].upper() == self.just_triple_click_letter.upper():
-        #                 self.execute_command(result[0][1])
-        #             else:
-        #                 self.execute_command('Not a command')
-        #             self.just_left_triple = False
-        #         else:
-        #             self.execute_command(result[0][1])
-        #     else:
-        #         self.execute_command('Not a command')
-        #     print('just have turn off command mode')
-        #     self.command_mode_status = False
-        #     self.just_left_triple = False
-
-
             
         if len(self.cursor_move_position_list) > 1:  # delete cursor trajectory
             for x in self.cursor_move_position_list[1:]:
