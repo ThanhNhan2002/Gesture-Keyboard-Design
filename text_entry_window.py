@@ -7,15 +7,11 @@ from template import Point, WordTemplates
 # pNote
 import tkinter.messagebox
 
-# 1 cmd
-#
-# 2 caps
-#
-# 3 2-click text area
-#
-# 4 triple click
-#
-# 5 right mouse
+# 1 Cmd button
+# 2 Capslock double-clicking
+# 3 Text area double-clicking
+# 4 Triple click
+# 5 Right mouse button
 
 class Application(tk.Frame):
     def __init__(self, window_width, window_height, master=None):
@@ -178,22 +174,21 @@ class Application(tk.Frame):
                     self.switch_command_mode_status()
         # in command mode
         else:
-            if len(result) > 0:  # input is a pattern
+            # input is a pattern
+            if len(result) > 0:
                 if self.just_left_triple:
                     if result[0][1] in self.possible_commands and result[0][1][0].upper() == self.just_triple_click_letter.upper():
                         self.execute_command(result[0][1])
                     else:
                         self.execute_command('Not a command')
                     self.just_left_triple = False
-
-                    self.command_mode_status = False
-                    print(f'Command mode: {self.command_mode_status}')
                 else:
                     self.execute_command(result[0][1])
 
-                    self.command_mode_status = False
-                    print(f'Command mode: {self.command_mode_status}')
-            else:  # singe click
+                self.command_mode_status = False
+                print(f'Command mode: {self.command_mode_status}')
+            # singe click
+            else:
                 key = self.keyboard.get_key_pressed()
                 if key == 'Cmd':
                     self.switch_command_mode_status()
