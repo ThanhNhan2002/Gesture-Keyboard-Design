@@ -27,6 +27,7 @@ class Application(tk.Frame):
 
         self.text = tk.Text(frame_top, bg='white', borderwidth=2, relief='groove', font=('Arial', 20))
         self.text.place(x=0, y=0, width=window_width, height=frame_top_height)
+        # Solution 3: double-click the text area to switch command mode
         self.text.bind("<Double-Button-1>", self.text_left_double)
 
         # the middle frame is used to list word candidates (four labels)
@@ -64,8 +65,10 @@ class Application(tk.Frame):
         self.canvas_keyboard.bind("<ButtonRelease-1>", self.mouse_left_button_release)
         self.canvas_keyboard.bind("<B1-Motion>", self.mouse_move_left_button_down)
         self.canvas_keyboard.bind("<Double-Button-1>", self.left_double_click)
+        # Solution 4: triple-click a letter to perform a command
         self.canvas_keyboard.bind("<Triple-1>", self.left_triple_click)
 
+        #Solution 5: Use the right mouse button to input a command
         self.canvas_keyboard.bind("<ButtonPress-3>", self.mouse_right_button_press)
         self.canvas_keyboard.bind("<ButtonRelease-3>", self.mouse_right_button_release)
         self.canvas_keyboard.bind("<B3-Motion>", self.mouse_move_right_button_down)
@@ -117,6 +120,7 @@ class Application(tk.Frame):
 
     def left_double_click(self, event):
         key_pressed = self.keyboard.get_key_pressed()  # return pressed key in a string format
+        # Solution 2: double-click the Capslock key to switch command mode 
         if key_pressed == 'Caps':
             self.switch_command_mode_status()
 
@@ -169,6 +173,7 @@ class Application(tk.Frame):
                     length = len(self.text.get("1.0", 'end-1c'))
                     if length > 0:
                         self.text.delete("end-2c") # remover the last character
+                # Solution 1: click the 'Cmd' button to switch command mode
                 elif key == 'Cmd':
                     self.switch_command_mode_status()
         # in command mode
@@ -191,12 +196,10 @@ class Application(tk.Frame):
                 key = self.keyboard.get_key_pressed()
                 if key == 'Cmd':
                     self.switch_command_mode_status()
-
             
         if len(self.cursor_move_position_list) > 1:  # delete cursor trajectory
             for x in self.cursor_move_position_list[1:]:
                 self.canvas_keyboard.delete(x[2])
-
 
     # users drag the mouse cursor on the keyboard while pressing the left button: drawing gestures on the keyboard
     def mouse_move_left_button_down(self, event):
