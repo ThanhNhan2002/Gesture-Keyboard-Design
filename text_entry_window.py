@@ -58,7 +58,7 @@ class Application(tk.Frame):
         self.canvas_keyboard.bind("<ButtonPress-1>", self.mouse_left_button_press)
         self.canvas_keyboard.bind("<ButtonRelease-1>", self.mouse_left_button_release)
         self.canvas_keyboard.bind("<B1-Motion>", self.mouse_move_left_button_down)
-        # self.canvas_keyboard.bind("<Double-Button-1>", self.left_double_click)
+        self.canvas_keyboard.bind("<Double-Button-1>", self.left_double_click)
         self.canvas_keyboard.bind("<Triple-1>", self.left_triple_click)
 
         # store x, y, segment tag
@@ -166,9 +166,13 @@ class Application(tk.Frame):
                     self.execute_command(result[0][1])
                 else:
                     self.execute_command('Not a command')
-            else:  # input is just a simple click
-                self.execute_command('Not a command')
+
+            else:  # input is a simple click
+                if self.just_left_triple:
+                    self.execute_command('Not a command')
+
             self.command_mode_status = False
+            print(f'Command mode: {self.command_mode_status}')
             self.just_left_triple = False
             
         if len(self.cursor_move_position_list) > 1:  # delete cursor trajectory
