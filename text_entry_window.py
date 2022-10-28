@@ -71,6 +71,10 @@ class Application(tk.Frame):
         self.canvas_keyboard.bind("<Double-Button-1>", self.left_double_click)
         self.canvas_keyboard.bind("<Triple-1>", self.left_triple_click)
 
+        self.canvas_keyboard.bind("<ButtonPress-3>", self.mouse_right_button_press)
+        self.canvas_keyboard.bind("<ButtonRelease-3>", self.mouse_right_button_release)
+        self.canvas_keyboard.bind("<B3-Motion>", self.mouse_move_right_button_down)
+
         # store x, y, segment tag
         self.cursor_move_position_list = []
 
@@ -205,6 +209,51 @@ class Application(tk.Frame):
 
         self.keyboard.mouse_move_left_button_down(event.x, event.y)
         self.gesture_points.append(Point(event.x, event.y)) # store all cursor movement points
+
+
+    #right mouse button
+    def mouse_right_button_press(self, event):
+        self.cursor_move_position_list.append([event.x, event.y, 0])  # store x, y, segment tag
+        self.keyboard.key_press(event.x, event.y)
+        self.gesture_points.clear()
+
+        # self.gesture_points.append(Point(event.x, event.y))
+
+    # release mouse right button
+    def mouse_right_button_release(self, event):
+        previous_x = self.cursor_move_position_list[-1][0]
+        previous_y = self.cursor_move_position_list[-1][1]
+        line_tag = self.canvas_keyboard.create_line(previous_x, previous_y, event.x, event.y)
+        self.cursor_move_position_list.append([event.x, event.y, line_tag])
+
+        self.keyboard.key_release(event.x, event.y)
+        result = self.word_recognizer.recognize(self.gesture_points)
+        if (len(result) > 0):
+            print('command input triggered by right mouse button')
+            self.execute_command(result[0][1])
+
+        if len(self.cursor_move_position_list) > 1:  # delete cursor trajectory
+            for x in self.cursor_move_position_list[1:]:
+                self.canvas_keyboard.delete(x[2])
+
+    # users drag the mouse cursor on the keyboard while pressing the left button: drawing gestures on the keyboard
+    def mouse_move_right_button_down(self, event):
+        previous_x = self.cursor_move_position_list[-1][0]
+        previous_y = self.cursor_move_position_list[-1][1]
+
+        line_tag = self.canvas_keyboard.create_line(previous_x, previous_y, event.x, event.y)  # draw a line
+        self.cursor_move_position_list.append([event.x, event.y, line_tag])
+
+        self.keyboard.mouse_move_left_button_down(event.x, event.y)
+        self.gesture_points.append(Point(event.x, event.y))  # store all cursor movement points
+
+
+
+
+
+
+
+
 
 
 if __name__ == '__main__':
