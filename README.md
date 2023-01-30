@@ -1,4 +1,6 @@
 # Gesture-Keyboard-Design
+Implementation of a gesture keyboard UI which supports text-editing command input by drawing gestures for mobile devices.
+This project is a part of an assignment of the CSE2UI subject at La Trobe University.
 ## Installation 
 1. Download the PyCharm IDE
 2. Download the source
